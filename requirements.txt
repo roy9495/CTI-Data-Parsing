@@ -1,0 +1,6 @@
+stix2==3.0.1
+psycopg2-binary
+pandas
+sqlalchemy
+fuzzywuzzy
+python-Levenshtein
