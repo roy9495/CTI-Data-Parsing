@@ -31,6 +31,10 @@ app.add_middleware(
 @app.middleware("http")
 async def check_startup_error(request, call_next):
     global startup_error_message
+    # Bypass middleware check for the environment debugger
+    if request.url.path == "/api/debug-env":
+        return await call_next(request)
+        
     if startup_error_message:
         from fastapi.responses import HTMLResponse
         html_content = f"""
@@ -45,6 +49,32 @@ async def check_startup_error(request, call_next):
         """
         return HTMLResponse(content=html_content, status_code=500)
     return await call_next(request)
+
+# Secure Environment Debug Endpoint
+@app.get("/api/debug-env")
+def debug_env():
+    import os
+    res = {}
+    # We inspect standard database variables as well as typical Supabase variables
+    keys = ["DATABASE_URL", "POSTGRES_URL", "POSTGRES_URL_NON_POOLING", "SUPABASE_URL", "VERCEL", "VERCEL_ENV"]
+    for key in keys:
+        val = os.environ.get(key)
+        if val:
+            # Mask value to prevent security leaks
+            parts = val.split("://")
+            scheme = parts[0] if len(parts) > 1 else "no_scheme"
+            res[key] = {
+                "length": len(val),
+                "scheme": scheme,
+                "starts_with": val[:15],
+                "ends_with": val[-15:] if len(val) > 15 else val,
+                "has_spaces": " " in val,
+                "has_newlines": "\n" in val or "\r" in val
+            }
+        else:
+            res[key] = "not_set"
+    return res
+
 
 # Initialize DB on startup
 @app.on_event("startup")
