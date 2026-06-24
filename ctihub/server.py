@@ -320,16 +320,18 @@ def get_object_relationships(obj_id: str, db: Session = Depends(get_db)):
     return result
 
 # Serve Single Page App
-# Map static folder first, then return index.html for root path
-ui_dir = os.path.join(os.path.dirname(__file__), "ui")
-if not os.path.exists(ui_dir):
-    os.makedirs(ui_dir, exist_ok=True)
+# Map static folder first, then return index.html for root path (only when not running on Vercel)
+if not os.environ.get("VERCEL"):
+    ui_dir = os.path.join(os.path.dirname(__file__), "ui")
+    if not os.path.exists(ui_dir):
+        os.makedirs(ui_dir, exist_ok=True)
 
-app.mount("/static", StaticFiles(directory=ui_dir), name="static")
+    app.mount("/static", StaticFiles(directory=ui_dir), name="static")
 
-@app.get("/")
-def get_index():
-    index_file = os.path.join(ui_dir, "index.html")
-    if os.path.exists(index_file):
-        return FileResponse(index_file)
-    return JSONResponse(content={"message": "Welcome to CTIHub API. Frontend UI code is missing at ctihub/ui/index.html"}, status_code=200)
+    @app.get("/")
+    def get_index():
+        index_file = os.path.join(ui_dir, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        return JSONResponse(content={"message": "Welcome to CTIHub API. Frontend UI code is missing at ctihub/ui/index.html"}, status_code=200)
+
