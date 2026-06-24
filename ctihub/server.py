@@ -16,6 +16,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
+startup_error_message = None
+
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
@@ -25,9 +27,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Startup Error Middleware
+@app.middleware("http")
+async def check_startup_error(request, call_next):
+    global startup_error_message
+    if startup_error_message:
+        from fastapi.responses import HTMLResponse
+        html_content = f"""
+        <html>
+            <head><title>CTIHub Startup Debugger</title></head>
+            <body style="font-family: monospace; padding: 20px; background: #1a1a1a; color: #ff5555; line-height: 1.5;">
+                <h1 style="color: #ff3333; border-bottom: 1px solid #ff3333; padding-bottom: 10px;">Critical Startup/Initialization Error</h1>
+                <p>The application started but failed to initialize correctly. Below is the traceback:</p>
+                <pre style="background: #2a2a2a; padding: 15px; border-radius: 5px; overflow-x: auto; color: #f8f8f2;">{startup_error_message}</pre>
+            </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content, status_code=500)
+    return await call_next(request)
+
 # Initialize DB on startup
 @app.on_event("startup")
 def on_startup():
+    global startup_error_message
     try:
         init_db()
         db = next(get_db())
@@ -35,9 +57,10 @@ def on_startup():
     except Exception as e:
         import traceback
         import sys
+        startup_error_message = traceback.format_exc()
         print("!!! CRITICAL STARTUP EXCEPTION !!!", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
-        raise e
+
 
 
 # Dashboard Stats API
