@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTIHub Platform</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Vis.js Network CDN -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <!-- App CSS stylesheet -->
+    <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-icon"><i data-lucide="shield-alert" class="neon-glow-cyan"></i></div>
+                <div class="logo-text">CTI<span>Hub</span></div>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#dashboard" class="nav-item active" data-view="dashboard">
+                    <i data-lucide="layout-dashboard"></i> <span>Dashboard</span>
+                </a>
+                <a href="#indicators" class="nav-item" data-view="indicators">
+                    <i data-lucide="radar"></i> <span>Indicators</span>
+                </a>
+                <a href="#threats" class="nav-item" data-view="threats">
+                    <i data-lucide="skull"></i> <span>Threat Library</span>
+                </a>
+                <a href="#graph" class="nav-item" data-view="graph">
+                    <i data-lucide="network"></i> <span>Knowledge Graph</span>
+                </a>
+                <a href="#connectors" class="nav-item" data-view="connectors">
+                    <i data-lucide="cable"></i> <span>Connectors</span>
+                    <span class="active-connectors-badge" id="active-connectors-count" style="display: none;">0</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="platform-status">
+                    <span class="status-indicator online"></span>
+                    <span>API Connected</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-search">
+                    <i data-lucide="search"></i>
+                    <input type="text" id="global-search" placeholder="Search indicator, threat, malware...">
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="btn-quick-ingest">
+                        <i data-lucide="upload-cloud"></i> Ingest STIX Bundle
+                    </button>
+                    <div class="user-profile">
+                        <div class="avatar">AG</div>
+                        <div class="user-info">
+                            <span class="user-name">Antigravity Analyst</span>
+                            <span class="user-role">Administrator</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard View -->
+            <section id="dashboard-view" class="content-view active">
+                <div class="view-header">
+                    <h1>Dashboard Overview</h1>
+                    <span class="text-muted">Real-time cyber threat intelligence analytics.</span>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card indicator-card">
+                        <div class="card-body">
+                            <div class="stat-info">
+                                <span class="stat-label">Total Indicators</span>
+                                <h2 class="stat-value" id="stat-indicators">0</h2>
+                            </div>
+                            <div class="stat-icon-wrapper"><i data-lucide="radar"></i></div>
+                        </div>
+                        <div class="card-footer-glow bg-cyan"></div>
+                    </div>
+
+                    <div class="stat-card malware-card">
+                        <div class="card-body">
+                            <div class="stat-info">
+                                <span class="stat-label">Malware Families</span>
+                                <h2 class="stat-value" id="stat-malware">0</h2>
+                            </div>
+                            <div class="stat-icon-wrapper"><i data-lucide="biohazard"></i></div>
+                        </div>
+                        <div class="card-footer-glow bg-red"></div>
+                    </div>
+
+                    <div class="stat-card actors-card">
+                        <div class="card-body">
+                            <div class="stat-info">
+                                <span class="stat-label">Threat Actors</span>
+                                <h2 class="stat-value" id="stat-actors">0</h2>
+                            </div>
+                            <div class="stat-icon-wrapper"><i data-lucide="skull"></i></div>
+                        </div>
+                        <div class="card-footer-glow bg-purple"></div>
+                    </div>
+
+                    <div class="stat-card relationships-card">
+                        <div class="card-body">
+                            <div class="stat-info">
+                                <span class="stat-label">STIX Relationships</span>
+                                <h2 class="stat-value" id="stat-relationships">0</h2>
+                            </div>
+                            <div class="stat-icon-wrapper"><i data-lucide="share-2"></i></div>
+                        </div>
+                        <div class="card-footer-glow bg-green"></div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="charts-row">
+                    <div class="panel panel-chart col-8">
+                        <div class="panel-header">
+                            <h3>Ingested Entities Distribution</h3>
+                            <i data-lucide="bar-chart-2" class="text-muted"></i>
+                        </div>
+                        <div class="panel-body">
+                            <div class="chart-container">
+                                <canvas id="chart-entities"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="panel panel-chart col-4">
+                        <div class="panel-header">
+                            <h3>Confidence Levels</h3>
+                            <i data-lucide="activity" class="text-muted"></i>
+                        </div>
+                        <div class="panel-body">
+                            <div class="chart-container">
+                                <canvas id="chart-confidence"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Row -->
+                <div class="recent-row">
+                    <div class="panel col-12">
+                        <div class="panel-header">
+                            <h3>Live Ingestion Log Feed</h3>
+                            <button class="btn-text" id="refresh-dashboard-feed"><i data-lucide="rotate-cw"></i> Refresh</button>
+                        </div>
+                        <div class="panel-body table-responsive">
+                            <table class="data-table" id="dashboard-feed-table">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Entity Name / IOC Value</th>
+                                        <th>Source Connector</th>
+                                        <th>Confidence</th>
+                                        <th>Ingested At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4">No data ingested. Go to the Connectors page to ingest data.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Indicators View -->
+            <section id="indicators-view" class="content-view">
+                <div class="view-header">
+                    <h1>Indicators Registry</h1>
+                    <span class="text-muted">Explore threat intelligence observables and patterns.</span>
+                </div>
+
+                <div class="filter-bar">
+                    <div class="search-box">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="indicator-search" placeholder="Filter by pattern, IP, Domain...">
+                    </div>
+                    <div class="filter-groups">
+                        <select id="indicator-filter-type">
+                            <option value="">All Types</option>
+                            <option value="ipv4-addr">IPv4 Addresses</option>
+                            <option value="domain-name">Domain Names</option>
+                            <option value="url">URLs</option>
+                            <option value="file">File Hashes</option>
+                        </select>
+                        <select id="indicator-filter-source">
+                            <option value="">All Sources</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-body table-responsive">
+                        <table class="data-table" id="indicators-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Value</th>
+                                    <th>STIX 2.1 Pattern</th>
+                                    <th>Source</th>
+                                    <th>Confidence</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">Loading indicators...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Threat Library View -->
+            <section id="threats-view" class="content-view">
+                <div class="view-header">
+                    <h1>Threat Intelligence Library</h1>
+                    <span class="text-muted">View classified threat actors, malware, campaigns, and vulnerabilities.</span>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="threat-actors">Threat Actors</button>
+                    <button class="tab-btn" data-tab="malware">Malware</button>
+                    <button class="tab-btn" data-tab="campaigns">Campaigns</button>
+                    <button class="tab-btn" data-tab="vulnerabilities">Vulnerabilities</button>
+                    <button class="tab-btn" data-tab="tools">Tools</button>
+                    <button class="tab-btn" data-tab="techniques">Techniques</button>
+                    <button class="tab-btn" data-tab="targets">Target Industries</button>
+                </div>
+
+                <div class="panel mt-4">
+                    <div class="panel-body" id="threats-content">
+                        <!-- Content populated dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Knowledge Graph View -->
+            <section id="graph-view" class="content-view">
+                <div class="view-header-row">
+                    <div class="view-header">
+                        <h1>STIX Relationships Graph</h1>
+                        <span class="text-muted">Interactive visual mapping of cyber threat actors, malware, techniques, and indicators.</span>
+                    </div>
+                    <div class="graph-actions">
+                        <button class="btn btn-secondary" id="btn-graph-reset"><i data-lucide="refresh-cw"></i> Reset Graph</button>
+                        <button class="btn btn-secondary" id="btn-graph-physics"><i data-lucide="pause-circle"></i> Freeze Physics</button>
+                    </div>
+                </div>
+
+                <div class="graph-layout mt-4">
+                    <!-- Graph Canvas -->
+                    <div class="graph-container-wrapper">
+                        <div id="relationship-graph"></div>
+                        <div class="graph-legend">
+                            <span class="legend-item"><span class="legend-dot bg-purple"></span> Threat Actor</span>
+                            <span class="legend-item"><span class="legend-dot bg-red"></span> Malware</span>
+                            <span class="legend-item"><span class="legend-dot bg-orange"></span> Campaign</span>
+                            <span class="legend-item"><span class="legend-dot bg-yellow"></span> Vulnerability</span>
+                            <span class="legend-item"><span class="legend-dot bg-cyan"></span> Indicator</span>
+                            <span class="legend-item"><span class="legend-dot bg-green"></span> Target/Identity</span>
+                            <span class="legend-item"><span class="legend-dot bg-blue"></span> Technique</span>
+                        </div>
+                    </div>
+
+                    <!-- Graph Detail Panel -->
+                    <div class="graph-detail-panel" id="graph-node-details">
+                        <div class="panel-header">
+                            <h3>Intelligence Entity</h3>
+                            <i data-lucide="info" class="text-muted"></i>
+                        </div>
+                        <div class="panel-body">
+                            <div class="empty-state">
+                                <i data-lucide="mouse-pointer-click"></i>
+                                <p>Click a node or relationship in the knowledge graph to view its detailed threat attributes.</p>
+                            </div>
+                            <div class="entity-details" style="display: none;">
+                                <div class="entity-badge" id="detail-entity-type">Malware</div>
+                                <h2 class="entity-title" id="detail-entity-name">WannaCry</h2>
+                                <p class="entity-desc" id="detail-entity-desc">Ransomware description...</p>
+                                
+                                <div class="detail-group">
+                                    <span class="detail-label">STIX ID:</span>
+                                    <span class="detail-value text-mono text-xs" id="detail-entity-id">malware--uuid</span>
+                                </div>
+                                <div class="detail-group">
+                                    <span class="detail-label">Confidence:</span>
+                                    <span class="detail-value" id="detail-entity-confidence">100%</span>
+                                </div>
+                                <div class="detail-group">
+                                    <span class="detail-label">Platform Source:</span>
+                                    <span class="detail-value" id="detail-entity-source">MITRE ATT&CK</span>
+                                </div>
+
+                                <div class="detail-group mt-4">
+                                    <button class="btn btn-secondary btn-full-width" id="btn-view-raw-stix">
+                                        <i data-lucide="code"></i> View Raw STIX JSON
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Connectors View -->
+            <section id="connectors-view" class="content-view">
+                <div class="view-header">
+                    <h1>CTIHub Connector Status</h1>
+                    <span class="text-muted">Configure and run standard threat intel connectors to sync with the platform.</span>
+                </div>
+
+                <!-- Connectors Grid -->
+                <div class="connectors-grid mt-4" id="connectors-container">
+                    <!-- Connector Cards loaded dynamically -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Slideout Drawer for Raw STIX Object View -->
+    <div class="drawer-overlay" id="stix-drawer-overlay"></div>
+    <div class="drawer" id="stix-drawer">
+        <div class="drawer-header">
+            <h2>STIX 2.1 Object Definition</h2>
+            <button class="btn-icon" id="btn-close-drawer"><i data-lucide="x"></i></button>
+        </div>
+        <div class="drawer-body">
+            <div class="tabs drawer-tabs">
+                <button class="drawer-tab-btn active" data-drawer-tab="stix-properties">Entity Information</button>
+                <button class="drawer-tab-btn" data-drawer-tab="stix-relationships">Relations</button>
+                <button class="drawer-tab-btn" data-drawer-tab="stix-json-view">Raw JSON</button>
+            </div>
+            
+            <div class="drawer-tab-content active" id="stix-properties">
+                <!-- Properties filled in dynamically -->
+            </div>
+
+            <div class="drawer-tab-content" id="stix-relationships">
+                <div class="drawer-property-list" id="stix-relationships-list">
+                    <!-- Relationships loaded dynamically -->
+                </div>
+            </div>
+
+            <div class="drawer-tab-content" id="stix-json-view">
+                <pre><code id="stix-json-code">{}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Ingest Modal -->
+    <div class="modal-overlay" id="ingest-modal-overlay"></div>
+    <div class="modal" id="ingest-modal">
+        <div class="modal-header">
+            <h2>Ingest STIX 2.1 Threat Intel Bundle</h2>
+            <button class="btn-icon" id="btn-close-modal"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+            <p class="text-muted text-sm mb-4">Paste a valid STIX 2.1 Bundle JSON below to directly ingest indicators, malware, threat actors, and relationships into the platform.</p>
+            <textarea id="stix-bundle-paste" placeholder='{
+  "type": "bundle",
+  "id": "bundle--...",
+  "objects": [ ... ]
+}'></textarea>
+            <div class="modal-actions mt-4">
+                <button class="btn btn-secondary" id="btn-cancel-ingest">Cancel</button>
+                <button class="btn btn-primary" id="btn-submit-ingest"><i data-lucide="upload"></i> Process Ingestion</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS app code -->
+    <script src="/static/app.js"></script>
+</body>
+</html>

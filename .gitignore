@@ -1,1 +1,22 @@
-venv/*
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local Database
+*.db
+ctihub.db
+
+# Output data
+output/
+
+# IDE files
+.vscode/
+.idea/
+.DS_Store
