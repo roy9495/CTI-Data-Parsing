@@ -389,24 +389,30 @@ def get_object_relationships(obj_id: str, db: Session = Depends(get_db)):
     return result
 
 # Serve Single Page App
-# Map static folder first, then return index.html for root path (only when not running on Vercel)
-if not os.environ.get("VERCEL"):
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    ui_dir = os.path.join(project_root, "public")
-    static_dir = os.path.join(ui_dir, "static")
-    
-    if not os.path.exists(ui_dir):
+# Map static folder first, then return index.html for root path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ui_dir = os.path.join(project_root, "public")
+static_dir = os.path.join(ui_dir, "static")
+
+if not os.path.exists(ui_dir):
+    try:
         os.makedirs(ui_dir, exist_ok=True)
-    if not os.path.exists(static_dir):
+    except Exception:
+        pass
+if not os.path.exists(static_dir):
+    try:
         os.makedirs(static_dir, exist_ok=True)
+    except Exception:
+        pass
 
-    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-    @app.get("/")
-    def get_index():
-        index_file = os.path.join(ui_dir, "index.html")
-        if os.path.exists(index_file):
-            return FileResponse(index_file)
-        return JSONResponse(content={"message": "Welcome to CTIHub API. Frontend UI code is missing at public/index.html"}, status_code=200)
+@app.get("/")
+def get_index():
+    index_file = os.path.join(ui_dir, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    return JSONResponse(content={"message": "Welcome to CTIHub API. Frontend UI code is missing at public/index.html"}, status_code=200)
+
 
 
