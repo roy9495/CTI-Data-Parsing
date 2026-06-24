@@ -5,11 +5,9 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(os.getcwd())
 
-try:
-    from ctihub.server import app
-except Exception as e:
-    import traceback
-    print("!!! CRITICAL EXCEPTION DURING API IMPORT !!!", file=sys.stderr)
-    traceback.print_exc(file=sys.stderr)
-    raise e
+from ctihub.server import app as _app
+
+# Assign to top-level 'app' variable for Vercel's static AST parser
+app = _app
+
 
