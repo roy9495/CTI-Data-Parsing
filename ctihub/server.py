@@ -54,8 +54,8 @@ async def check_startup_error(request, call_next):
 @app.get("/api/debug-env")
 def debug_env():
     import os
+    from urllib.parse import urlparse, parse_qs
     res = {}
-    # We inspect standard database variables as well as typical Supabase variables
     keys = ["DATABASE_URL", "POSTGRES_URL", "POSTGRES_URL_NON_POOLING", "SUPABASE_URL", "VERCEL", "VERCEL_ENV"]
     for key in keys:
         val = os.environ.get(key)
@@ -63,17 +63,33 @@ def debug_env():
             # Mask value to prevent security leaks
             parts = val.split("://")
             scheme = parts[0] if len(parts) > 1 else "no_scheme"
+            
+            # Parse URL parts safely
+            parsed_url = None
+            query_params = {}
+            if scheme in ["postgres", "postgresql", "http", "https"]:
+                try:
+                    parsed_url = urlparse(val)
+                    if parsed_url.query:
+                        query_params = parse_qs(parsed_url.query)
+                except Exception:
+                    pass
+            
             res[key] = {
                 "length": len(val),
                 "scheme": scheme,
-                "starts_with": val[:15],
-                "ends_with": val[-15:] if len(val) > 15 else val,
                 "has_spaces": " " in val,
-                "has_newlines": "\n" in val or "\r" in val
+                "has_newlines": "\n" in val or "\r" in val,
+                "hostname": parsed_url.hostname if parsed_url else "N/A",
+                "port": parsed_url.port if parsed_url else "N/A",
+                "path": parsed_url.path if parsed_url else "N/A",
+                "query_params": list(query_params.keys()) if query_params else [],
+                "raw_query_masked": parsed_url.query[:30] + "..." if parsed_url and parsed_url.query else "N/A"
             }
         else:
             res[key] = "not_set"
     return res
+
 
 
 # Initialize DB on startup
