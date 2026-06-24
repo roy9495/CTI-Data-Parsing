@@ -28,9 +28,17 @@ app.add_middleware(
 # Initialize DB on startup
 @app.on_event("startup")
 def on_startup():
-    init_db()
-    db = next(get_db())
-    register_connectors_if_missing(db)
+    try:
+        init_db()
+        db = next(get_db())
+        register_connectors_if_missing(db)
+    except Exception as e:
+        import traceback
+        import sys
+        print("!!! CRITICAL STARTUP EXCEPTION !!!", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        raise e
+
 
 # Dashboard Stats API
 @app.get("/api/stats")
