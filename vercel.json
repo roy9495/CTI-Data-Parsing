@@ -1,8 +1,6 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.py" },
-    { "source": "/static/(.*)", "destination": "/ctihub/ui/$1" },
-    { "source": "/", "destination": "/ctihub/ui/index.html" }
+    { "source": "/api/(.*)", "destination": "/api/index.py" }
   ]
 }
